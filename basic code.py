@@ -43,3 +43,32 @@ counter = 1
 while counter <= 5:
     print("count:", counter)
     counter += 1
+#break
+
+for i in range(10):
+    if i == 5:
+        break
+    print(i)
+ #continue   
+for i in range(10):
+    if i %2 == 0:
+        continue
+    print(i)
+
+#list 
+
+numbers = [10,20,30,40]
+names = ["kusum","Ranjan","Neha"]
+mixed = [10,"hello",3.5,True]
+print(numbers)
+
+fruits = ["apple", "banana","orange","cherry"]
+print(fruits[0])
+print(fruits[1])
+print(fruits[-1])
+
+fruits.append("mango")
+print(fruits)
+
+fruits.insert(1,"kiwi")
+print(fruits)
