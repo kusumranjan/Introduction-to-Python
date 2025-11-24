@@ -1,0 +1,156 @@
+**#Exercise 12 - Square and Cube of a Number**
+
+number = int(input("Enter number:"))
+
+
+
+square = number \*\* 2
+
+cube = number \*\* 3
+
+
+
+print(f"Square: {square}")
+
+print(f"Cube: {cube}")
+
+
+
+**#Exercise 13 - Convert Minutes to Hours and Minutes**
+
+
+
+minutes = int(input("Enter minutes: "))
+
+print(minutes // 60, "hours and", minutes % 60, "minutes")
+
+
+
+**#exercise 14** 
+
+
+
+
+
+a = int(input("Enter a: "))
+
+b = int(input("Enter b: "))
+
+
+
+
+
+a, b = b, a
+
+
+
+print("After swap → a =", a, ", b =", b)
+
+
+
+**#Exercise 15** 
+
+
+
+
+
+num = int(input("Enter a number: "))
+
+
+
+if num > 0:
+
+&nbsp;   print("Positive")
+
+elif num < 0:
+
+&nbsp;   print("Negative")
+
+else:
+
+&nbsp;   print("Zero")
+
+&nbsp;   
+
+**#Exercise 16**
+
+
+
+num = int(input("Enter a number: "))
+
+print("Last digit:", num % 10)
+
+
+
+**#Exercise 17** 
+
+
+
+
+
+n = int(input("Enter : "))
+
+total = 0
+
+
+
+for i in range(1, n + 1):
+
+&nbsp;   total = total + i
+
+
+
+print("Sum =", total)
+
+
+
+**#Exercise 18** 
+
+
+
+
+
+num = int(input("Enter a number: "))
+
+
+
+for i in range(1, 11):
+
+&nbsp;   print(f"{num} x {i} = {num \* i}")
+
+&nbsp;   
+
+**#Exercise 19**
+
+
+
+
+
+num = input("Enter a number: ")
+
+print("Total digits:", len(num))
+
+
+
+**# Exercise 20** 
+
+
+
+num = int(input("Enter a number: "))
+
+rev = 0
+
+
+
+while num > 0:          
+
+&nbsp;   digit = num % 10    
+
+&nbsp;   rev = rev \* 10 + digit  
+
+&nbsp;   num = num // 10     
+
+
+
+print("Reversed number:", rev)
+
