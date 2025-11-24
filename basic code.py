@@ -72,3 +72,10 @@ print(fruits)
 
 fruits.insert(1,"kiwi")
 print(fruits)
+
+fruits = ["apple", "banana", "orange"]
+
+fruits.remove("banana")
+fruits.pop(2)
+fruits.pop()
+del fruits[0]
