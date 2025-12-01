@@ -1,0 +1,18 @@
+#example
+
+import pandas as pd
+
+df = pd.DataFrame({
+    "Name": ["Aisha","Rahul","Neha"],
+    "Marks":[85,92,78,55],
+    "City":["mumbai","Delhi","Chennai","Banglore","Hybrabad"],
+    "Age": [22,25,23,21,24]
+})
+
+#print(df)
+
+city_count = df.groupby("City")["Marks"].count()
+print(city_count)
+
+avg_marks = df.groupby("City")["Marks"].mean()
+print(avg_marks)
