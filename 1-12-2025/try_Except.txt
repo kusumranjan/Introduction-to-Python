@@ -1,0 +1,11 @@
+Write a program that takes two numbers as input and handles division by zero using try–except.
+  Write a program to read a file. Handle FileNotFoundError and PermissionError.
+  Write a function that converts a string to integer and handles invalid inputs.
+  Build a safe list access function: if index is out of range, return a message instead of error.
+  Write a program to open a CSV file and handle incorrect file format errors.
+  Create a function that raises a custom exception InvalidAgeError if age < 18.
+  Write a program that attempts to convert items of a list to integers, handling conversion errors individually.
+  Create a bank withdrawal function that raises LowBalanceError when balance is insufficient.
+  Write a safe calculator function that handles invalid operators and incorrect inputs.
+  Write a program using try–except–else–finally to read user input and write it into a file safely.
+
