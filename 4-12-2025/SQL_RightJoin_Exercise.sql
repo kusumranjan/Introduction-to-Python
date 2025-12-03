@@ -1,0 +1,28 @@
+USE retail_db;
+SELECT p.product_id, p.product_name,p.category, o.order_id,o.order_date , o.total_amount
+FROM products p RIGHT JOIN orders o ON p.product_id = o.product_id;
+SELECT p.* FROM products p RIGHT JOIN orders o 
+ON p.product_id = o.product_id WHERE o.order_id IS NULL;
+SELECT p.product_name, COUNT(o.order_id) AS times_ordered FROM products p 
+RIGHT JOIN orders o ON p.product_id = o.product_id
+WHERE p.category = "Electronics" GROUP BY p.product_id , p.product_name;
+SELECT p.product_name,MIN(o.order_date) AS first_order_date FROM products p 
+RIGHT JOIN orders o ON p.product_id = o.product_id 
+WHERE p.category = "Groceries" GROUP BY p.product_id , p.product_name;
+SELECT p.product_id,p.product_name,COALESCE(SUM(o.total_amount),0) AS total_sales 
+FROM products p RIGHT JOIN orders o ON p.product_id = o.product_id 
+GROUP BY p.product_id , p.product_name;
+SELECT p.category , COUNT(o.order_id) AS total_orders FROM products p 
+RIGHT JOIN orders o ON p.product_id = o.product_id GROUP BY p.category;
+SELECT DISTINCT p.product_id, p.product_name FROM products p 
+RIGHT JOIN orders o ON p.product_id = o.product_id
+RIGHT JOIN customers c ON o.customer_id = c.customer_id 
+WHERE city = "Bangalore";
+SELECT p.* FROM products p RIGHT JOIN orders o ON p.product_id = o.product_id 
+WHERE o.order_id IS NULL;
+SELECT p.product_name , COUNT(o.order_id) AS order_count
+FROM products p RIGHT JOIN orders o ON p.product_id = o.product_id 
+GROUP BY p.product_id,p.product_name;
+SELECT DISTINCT p.product_id, p.product_name FROM products p 
+RIGHT JOIN orders o ON p.product_id = o.product_id 
+WHERE o.customer_id IS NULL;
