@@ -1,0 +1,109 @@
+============================================
+          SQL COMPLETE GUIDE
+============================================
+
+INTRODUCTION TO SQL
+-------------------
+SQL (Structured Query Language) is a standard language used to manage and manipulate relational databases. It allows users to create, read, update, and delete data efficiently.
+
+FEATURES OF SQL
+---------------
+- Simple and easy to learn.
+- Supports data definition, manipulation, and control.
+- Portable across different database systems.
+- Provides security through permissions.
+- Handles large volumes of data.
+
+BASICS OF SQL
+-------------
+SQL is divided into categories:
+
+1. **DDL (Data Definition Language)**
+   - CREATE: Create database objects.
+   - ALTER: Modify existing objects.
+   - DROP: Delete objects.
+
+   Example:
+   ```sql
+   CREATE TABLE students (
+       student_id INT AUTO_INCREMENT PRIMARY KEY,
+       first_name VARCHAR(50),
+       last_name VARCHAR(50),
+       email VARCHAR(50),
+       age INT,
+       city VARCHAR(50)
+   );
+   ```
+
+2. **DML (Data Manipulation Language)**
+   - INSERT: Add data.
+   - UPDATE: Modify data.
+   - DELETE: Remove data.
+
+   Example:
+   ```sql
+   INSERT INTO students (first_name, last_name, email, age, city)
+   VALUES ('John', 'Doe', 'john@example.com', 22, 'New York');
+   ```
+
+3. **DCL (Data Control Language)**
+   - GRANT: Give permissions.
+   - REVOKE: Remove permissions.
+
+4. **TCL (Transaction Control Language)**
+   - COMMIT: Save changes.
+   - ROLLBACK: Undo changes.
+
+ADVANCED SQL TOPICS
+-------------------
+1. **JOINS**
+   - INNER JOIN: Matches rows in both tables.
+   - LEFT JOIN: All rows from left table + matched rows from right.
+
+   Example:
+   ```sql
+   SELECT students.first_name, courses.course_name
+   FROM students
+   INNER JOIN courses ON students.student_id = courses.student_id;
+   ```
+
+2. **SUBQUERIES**
+   Example:
+   ```sql
+   SELECT first_name FROM students
+   WHERE age > (SELECT AVG(age) FROM students);
+   ```
+
+3. **INDEXING**
+   Speeds up queries:
+   ```sql
+   CREATE INDEX idx_city ON students(city);
+   ```
+
+4. **TRANSACTIONS**
+   Example:
+   ```sql
+   START TRANSACTION;
+   UPDATE students SET age = age + 1;
+   COMMIT;
+   ```
+
+5. **STORED PROCEDURES**
+   Example:
+   ```sql
+   DELIMITER //
+   CREATE PROCEDURE GetAllStudents()
+   BEGIN
+       SELECT * FROM students;
+   END //
+   DELIMITER ;
+   ```
+
+BEST PRACTICES
+--------------
+- Always use proper indexing.
+- Normalize your database.
+- Use transactions for critical operations.
+- Validate user inputs to prevent SQL injection.
+
+============================================
