@@ -1,0 +1,424 @@
+import React, { useEffect, useMemo, useState } from 'react';
+
+/** -------------------- Config -------------------- **/
+const BASE_URL = 'http://127.0.0.1:5000'; // Flask base URL
+
+/** -------------------- Minimal API client using fetch -------------------- **/
+async function request(method, path, body) {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (!res.ok) {
+    let msg = `Request failed (${res.status})`;
+    try {
+      const data = await res.json();
+      if (data && data.message) msg = data.message;
+    } catch (_err) {}
+    throw new Error(msg);
+  }
+
+  if (res.status === 204) return null; // e.g., DELETE
+  return res.json();
+}
+
+const TasksAPI = {
+  list: () => request('GET', '/tasks'),
+  create: (payload) => request('POST', '/tasks', payload),
+  update: (id, payload) => request('PUT', `/tasks/${id}`, payload),
+  patch: (id, payload) => request('PATCH', `/tasks/${id}`, payload),
+  remove: (id) => request('DELETE', `/tasks/${id}`),
+};
+
+/** -------------------- Styles injected (no separate CSS file) -------------------- **/
+const styles = `
+:root {
+  --bg: #0f172a;
+  --card: #111827;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #3b82f6;
+  --danger: #ef4444;
+  --border: #1f2937;
+}
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+  background: radial-gradient(1000px 800px at 20% 0%, #111827, #0b1020) no-repeat fixed, var(--bg);
+  color: var(--text);
+}
+.container { max-width: 900px; margin: 40px auto; padding: 0 16px 80px; }
+h1 { font-weight: 700; margin: 0 0 16px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+.row { display: flex; align-items: center; gap: 8px; }
+.col { display: flex; flex-direction: column; gap: 6px; }
+.grow { flex: 1; }
+.input { background: #0b1020; border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 10px 12px; outline: none; }
+.input:focus { border-color: #2d3a63; box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+.btn { background: #1f2937; color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+.btn:hover { background: #243042; }
+.btn.primary { background: var(--accent); border-color: #3067c2; }
+.btn.primary:hover, .btn.danger:hover { filter: brightness(0.95); }
+.btn.danger { background: var(--danger); border-color: #b91c1c; }
+.segmented { background: #0b1020; border: 1px solid var(--border); border-radius: 10px; padding: 4px; display: inline-flex; gap: 4px; }
+.seg { background: transparent; color: var(--text); border: 0; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+.seg.active { background: #16213a; border: 1px solid #2d3a63; }
+.alert.error { background: #3b0d0d; border: 1px solid #6b1717; color: #fecaca; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+.loading, .empty { color: var(--muted); text-align: center; padding: 16px; }
+.list { display: flex; flex-direction: column; gap: 8px; }
+.item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px; }
+.item .title { font-weight: 600; }
+.item.completed .title { text-decoration: line-through; color: #8da3c2; }
+.meta { color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+.toolbar { display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; }
+.spacer { flex: 1; }
+.edit-grid { display: grid; grid-template-columns: 3fr 1fr; gap: 8px; }
+.edit-grid textarea { grid-column: 1 / -1; min-height: 72px; }
+`;
+
+/** -------------------- Subcomponents (inline) -------------------- **/
+function TaskForm({ onAdd }) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [status, setStatus] = useState('Pending');
+
+  const submit = (e) => {
+    e.preventDefault();
+    const t = title.trim();
+    if (!t) return;
+    onAdd({ title: t, description: description.trim() || null, status });
+    setTitle('');
+    setDescription('');
+    setStatus('Pending');
+  };
+
+  return (
+    <form className="card" onSubmit={submit}>
+      <div className="row">
+        <input
+          className="input"
+          placeholder="What needs to be done?"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <select className="input" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="Pending">Pending</option>
+          <option value="Completed">Completed</option>
+        </select>
+        <button className="btn primary" type="submit">Add</button>
+      </div>
+      <textarea
+        className="input"
+        placeholder="Description (optional)"
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+      />
+    </form>
+  );
+}
+
+function Filters({ status, setStatus, q, setQ }) {
+  return (
+    <div className="card row">
+      <div className="segmented">
+        <button className={status === 'all' ? 'seg active' : 'seg'} onClick={() => setStatus('all')}>All</button>
+        <button className={status === 'pending' ? 'seg active' : 'seg'} onClick={() => setStatus('pending')}>Pending</button>
+        <button className={status === 'completed' ? 'seg active' : 'seg'} onClick={() => setStatus('completed')}>Completed</button>
+      </div>
+      <input
+        className="input"
+        placeholder="Search title or description…"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+      />
+    </div>
+  );
+}
+
+function TaskRow({ task, onToggle, onDelete, onUpdate, selected, toggleSelect }) {
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(task.title);
+  const [description, setDescription] = useState(task.description || '');
+  const [status, setStatus] = useState(task.status || 'Pending');
+
+  const save = () => {
+    const payload = {
+      title: title.trim() || task.title,
+      description: description.trim() || null,
+      status,
+    };
+    onUpdate(task.id, payload);
+    setEditing(false);
+  };
+
+  const cancel = () => {
+    setTitle(task.title);
+    setDescription(task.description || '');
+    setStatus(task.status || 'Pending');
+    setEditing(false);
+  };
+
+  const completed = task.status === 'Completed';
+
+  return (
+    <div className={`row item ${completed ? 'completed' : ''}`}>
+      <input type="checkbox" checked={selected} onChange={toggleSelect} title="Select for bulk actions" />
+      <input type="checkbox" checked={completed} onChange={() => onToggle(task)} title="Toggle complete" />
+      <div className="col grow">
+        {!editing ? (
+          <>
+            <div className="title">{task.title}</div>
+            {(task.description || task.created_at) && (
+              <div className="meta">
+                {task.description && <span className="desc">{task.description}</span>}
+                {task.created_at && <span className="due">Created: {task.created_at}</span>}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="edit-grid">
+            <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <select className="input" value={status} onChange={(e) => setStatus(e.target.value)}>
+              <option value="Pending">Pending</option>
+              <option value="Completed">Completed</option>
+            </select>
+            <textarea
+              className="input"
+              placeholder="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+        )}
+      </div>
+      {!editing ? (
+        <>
+          <button className="btn" onClick={() => setEditing(true)}>Edit</button>
+          <button className="btn danger" onClick={() => onDelete(task.id)}>Delete</button>
+        </>
+      ) : (
+        <>
+          <button className="btn primary" onClick={save}>Save</button>
+          <button className="btn" onClick={cancel}>Cancel</button>
+        </>
+      )}
+    </div>
+  );
+}
+
+function TaskList({ tasks, onToggle, onDelete, onUpdate, selectedIds, toggleSelect }) {
+  if (tasks.length === 0) return <div className="empty">No tasks to show.</div>;
+  return (
+    <div className="list">
+      {tasks.map((task) => (
+        <TaskRow
+          key={task.id}
+          task={task}
+          onToggle={onToggle}
+          onDelete={onDelete}
+          onUpdate={onUpdate}
+          selected={selectedIds.has(task.id)}
+          toggleSelect={() => toggleSelect(task.id)}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** -------------------- Main Component -------------------- **/
+export default function App() {
+  // Inject CSS once
+  useEffect(() => {
+    const styleEl = document.createElement('style');
+    styleEl.setAttribute('data-injected', 'todo-styles');
+    styleEl.textContent = styles;
+    document.head.appendChild(styleEl);
+    return () => {
+      if (styleEl && styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
+    };
+  }, []);
+
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+  const [status, setStatus] = useState('all'); // all | pending | completed
+  const [q, setQ] = useState('');
+  const [selectedIds, setSelectedIds] = useState(new Set());
+
+  const load = async () => {
+    setLoading(true);
+    setErr('');
+    try {
+      const data = await TasksAPI.list();
+      const normalized = (data || []).map((t) => ({
+        id: t.id,
+        title: t.title || '',
+        description: t.description || '',
+        status: t.status || 'Pending',
+        created_at: t.created_at || null,
+      }));
+      setTasks(normalized);
+    } catch (e) {
+      setErr(e.message || 'Failed to load tasks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const filtered = useMemo(() => {
+    const byStatus = tasks.filter((t) => {
+      if (status === 'pending') return t.status === 'Pending';
+      if (status === 'completed') return t.status === 'Completed';
+      return true;
+    });
+    if (!q.trim()) return byStatus;
+    const term = q.toLowerCase();
+    return byStatus.filter(
+      (t) =>
+        (t.title || '').toLowerCase().includes(term) ||
+        (t.description || '').toLowerCase().includes(term)
+    );
+  }, [tasks, status, q]);
+
+  const onAdd = async (payload) => {
+    setErr('');
+    try {
+      const created = await TasksAPI.create(payload);
+      setTasks((prev) => [created, ...prev]);
+    } catch (e) {
+      setErr(e.message || 'Failed to add task');
+    }
+  };
+
+  const onToggle = async (task) => {
+    setErr('');
+    const next = task.status === 'Pending' ? 'Completed' : 'Pending';
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, status: next } : t))); // optimistic
+    try {
+      await TasksAPI.patch(task.id, { status: next });
+    } catch (e) {
+      // revert
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, status: task.status } : t)));
+      setErr(e.message || 'Failed to toggle');
+    }
+  };
+
+  const onDelete = async (id) => {
+    setErr('');
+    const prev = tasks;
+    setTasks(prev.filter((t) => t.id !== id)); // optimistic
+    try {
+      await TasksAPI.remove(id);
+      setSelectedIds((s) => {
+        const next = new Set(s);
+        next.delete(id);
+        return next;
+      });
+    } catch (e) {
+      setTasks(prev); // revert
+      setErr(e.message || 'Failed to delete');
+    }
+  };
+
+  const onUpdate = async (id, payload) => {
+    setErr('');
+    const prev = tasks;
+    setTasks(prev.map((t) => (t.id === id ? { ...t, ...payload } : t))); // optimistic
+    try {
+      const updated = await TasksAPI.update(id, payload);
+      if (updated) {
+        setTasks((p) => p.map((t) => (t.id === id ? updated : t)));
+      }
+    } catch (e) {
+      setTasks(prev); // revert
+      setErr(e.message || 'Failed to update');
+    }
+  };
+
+  const onBulkStatus = async (value) => {
+    setErr('');
+    const ids = Array.from(selectedIds);
+    const prev = tasks;
+    setTasks(prev.map((t) => (selectedIds.has(t.id) ? { ...t, status: value } : t)));
+    try {
+      await Promise.all(ids.map((id) => TasksAPI.patch(id, { status: value })));
+    } catch (e) {
+      setTasks(prev); // revert
+      setErr(e.message || 'Failed bulk update');
+    }
+  };
+
+  const onBulkDelete = async () => {
+    setErr('');
+    const ids = Array.from(selectedIds);
+    const prev = tasks;
+    setTasks(prev.filter((t) => !selectedIds.has(t.id)));
+    try {
+      await Promise.all(ids.map((id) => TasksAPI.remove(id)));
+      setSelectedIds(new Set());
+    } catch (e) {
+      setTasks(prev);
+      setErr(e.message || 'Failed bulk delete');
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllVisible = () => setSelectedIds(new Set(filtered.map((t) => t.id)));
+  const clearSelection = () => setSelectedIds(new Set());
+
+  return (
+    <div className="container">
+      <h1>Tasks</h1>
+
+      {err && <div className="alert error">{err}</div>}
+
+      <TaskForm onAdd={onAdd} />
+
+      <Filters status={status} setStatus={setStatus} q={q} setQ={setQ} />
+
+      <div className="toolbar">
+        <button className="btn" disabled={selectedIds.size === 0} onClick={() => onBulkStatus('Completed')}>
+          Mark Completed
+        </button>
+        <button className="btn" disabled={selectedIds.size === 0} onClick={() => onBulkStatus('Pending')}>
+          Mark Pending
+        </button>
+        <button className="btn danger" disabled={selectedIds.size === 0} onClick={onBulkDelete}>
+          Delete Selected
+        </button>
+        <div className="spacer" />
+        <button className="btn" onClick={selectAllVisible}>Select All (visible)</button>
+        <button className="btn" onClick={clearSelection}>Clear Selection</button>
+      </div>
+
+      {loading ? (
+        <div className="loading">Loading…</div>
+      ) : (
+        <TaskList
+          tasks={filtered}
+          onToggle={onToggle}
+          onDelete={onDelete}
+          onUpdate={onUpdate}
+          selectedIds={selectedIds}
+          toggleSelect={toggleSelect}
+        />
+      )}
+    </div>
+  );
+}
